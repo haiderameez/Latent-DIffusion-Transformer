@@ -3,6 +3,33 @@ from torch import nn
 from torch.nn import functional as F
 from attention import SelfAttention
 
+
+class VAE_AttentionBlock(nn.Module):
+    def __init__(self, channels: int):
+        super().__init__()
+        self.groupnorm = nn.GroupNorm(32, channels)
+        self.attention = SelfAttention(1, channels)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        residue = x
+
+        n, c, h, w = x.shape
+
+        x = x.view(n, c, h*w)
+
+        x = x.transpose(-1, -2)
+
+        x = self.attention(x)
+
+        x = x.transpose(-1, -2)
+
+        x = x.view((n, c, h, w))
+
+        x += residue
+
+        return x
+
+
 class VAE_AttnetionBlock(nn.Module):
     def __init__(self, in_channels, out_channels):
         super().__init()
@@ -12,3 +39,24 @@ class VAE_AttnetionBlock(nn.Module):
         self.groupnorm_2 = nn.GroupNorm(32, out_channels)
         self.conv2 = nn.conv2d(in_channels, out_channels, kernel_size=3, padding=1)
         
+        if in_channels == out_channels:
+            self.residual_layer = nn.Identity()
+        else:
+            self.residual_layer = nn.conv2d(in_channels, out_channels, kernel_size=3, padding=0)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        residue = x
+
+        x = self.groupnorm_1(x)
+
+        x = F.silu(x)
+
+        x = self.conv1(x)
+
+        x = self.groupnorm_2(x)
+
+        x = F.silu(x)
+
+        x = self.conv2(x)
+
+        return x + self.residual_layer(residue)
