@@ -3,7 +3,6 @@ from torch import nn
 from torch.nn import functional as F
 from attention import SelfAttention
 
-
 class VAE_AttentionBlock(nn.Module):
     def __init__(self, channels: int):
         super().__init__()
@@ -30,7 +29,7 @@ class VAE_AttentionBlock(nn.Module):
         return x
 
 
-class VAE_AttnetionBlock(nn.Module):
+class VAE_ResidualBlock(nn.Module):
     def __init__(self, in_channels, out_channels):
         super().__init()
         self.groupnorm_1 = nn.GroupNorm(32, in_channels)
@@ -60,3 +59,69 @@ class VAE_AttnetionBlock(nn.Module):
         x = self.conv2(x)
 
         return x + self.residual_layer(residue)
+    
+class VAE_Decoder(nn.Sequential):
+
+    def __init__(self):
+        super().__init__(
+            nn.Conv2d(4, 4, kernel_size=1, padding=0),
+
+            nn.Conv2d(4, 512, kernel_size=3, padding=1),
+
+            VAE_ResidualBlock(512, 512),
+
+            VAE_AttentionBlock(512),
+
+            VAE_ResidualBlock(512, 512),
+
+            VAE_ResidualBlock(512, 512),
+
+            VAE_ResidualBlock(512, 512),
+
+            VAE_ResidualBlock(512, 512),
+
+            nn.Upsample(scale_factor=2),
+
+            nn.Conv2d(512, 512, kernel_size=3, padding=1),
+
+            VAE_ResidualBlock(512, 512),
+
+            VAE_ResidualBlock(512, 512),
+
+            VAE_ResidualBlock(512, 512),
+
+            nn.Upsample(scale_factor=2),
+
+            nn.Conv2d(512, 512, kernel_size=3, padding=1),
+
+            VAE_ResidualBlock(512, 256),
+
+            VAE_ResidualBlock(256, 256),
+
+            VAE_ResidualBlock(256, 256),
+
+            nn.Upsample(scale_factor=2),
+
+            nn.conv2d(256, 256, kernel_size=3, padding=1),
+
+            VAE_ResidualBlock(256, 128),
+
+            VAE_ResidualBlock(128, 128),
+
+            VAE_ResidualBlock(128, 128),
+
+            nn.GroupNorm(32, 128),
+
+            nn.SiLU(),
+
+            nn.Conv2d(128, 3, kernel_size=3, padding=1)
+        )
+
+    def forward(self, s: torch.Tensor) -> torch.Tensor:
+
+        x /= 0.18215
+
+        for module in self:
+            x = module(x)
+
+        return x
