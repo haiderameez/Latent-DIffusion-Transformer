@@ -70,7 +70,7 @@ class CrossAttention(nn.Module):
 
         q = q.view(interim_shape).transpose(1, 2)
         k = k.view(interim_shape).transpose(1, 2)
-        v = v..view(interim_shape).transpose(1, 2)
+        v = v.view(interim_shape).transpose(1, 2)
         
         weight = q @ transpose(-1, -2)
 
