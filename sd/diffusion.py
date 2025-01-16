@@ -177,7 +177,7 @@ class UNET(nn.Module):
 
             SwitchSequential(UNET_ResidualBlock(1280, 1280)),
 
-            SwitchSequential(UNET_ResidualBlock(1280, 1280)) 
+            SwitchSequential(UNET_ResidualBlock(1280, 1280)), 
         ])
 
         self.bottleneck = SwitchSequential(
@@ -211,7 +211,7 @@ class UNET(nn.Module):
 
             SwitchSequential(UNET_ResidualBlock(640, 320), UNET_AttentionBlock(8, 40)),
 
-            SwitchSequential(UNET_ResidualBlock(640, 320), UNET_AttentionBlock(8, 40))
+            SwitchSequential(UNET_ResidualBlock(640, 320), UNET_AttentionBlock(8, 40)),
         ])
 
 class UNET_OutputLayer(nn.Module):
