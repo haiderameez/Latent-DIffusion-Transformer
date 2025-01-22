@@ -92,8 +92,8 @@ def generate(
         diffusion.to(device)
 
         timesteps = tqdm(sampler.timesteps)
-        for i, timesteps in enumerate(timesteps):
-            time_embedding = get_time_embedding(timesteps).to(device)
+        for i, timestep in enumerate(timesteps):
+            time_embedding = get_time_embedding(timestep).to(device)
 
             model_input = latents
 
@@ -106,4 +106,34 @@ def generate(
                 output_cond, output_uncond = model_output.chunk(2)
                 model_output = cfg_scale * (output_cond - output_uncond) + output_uncond 
 
-            latents = sampler.step(timestep, )
+            latents = sampler.step(timestep, latents, model_output)
+
+        to_idle(diffusion)
+
+        decoder = models["decoder"]
+        decoder.to(device)
+
+        images = decoder(latents)
+        to_idle(decoder)
+
+        images = rescale(images, (-1, -1), (0, 255), clamp=True)
+        images = images.permute(0, 2, 3, 1)
+        images = images.to("cpu", torch.uint8).numpy()
+        return images[0]
+
+def rescale(x, old_range, new_range, clamp=False):
+    old_min, old_max = old_range
+    new_min, new_max = new_range
+    x -= old_min
+    x *= (new_max - new_min) / (old_max - old_min)
+    x += new_min
+    if clamp:
+        x = x.clamp(new_min, new_max)
+    return x
+
+def get_time_embedding(timestep):
+    freqs = torch.pow(10000, -torch.arange(start=0, end=160, dtype=torch.float32) / 160)
+
+    x = torch.tensor([timestep], dtype=torch.float32)[:, None] * freqs[None]
+
+    return torch.cat([torch.cos(x), torch.sin(x)], dim=-1)
