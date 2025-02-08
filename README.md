@@ -33,6 +33,14 @@ pip install -r requirements.txt
   ```ALLOW_CUDA = True  # Enable CUDA for NVIDIA GPUs```
   OR
   ```ALLOW_MPS = True   # Enable MPS for Apple Silicon (M1/M2)```
+
+## Example
+
+Prompt: A very high quality image of a scenic view containing mountains and a river flowing between them, 8k resolution.
+
+![output](https://github.com/user-attachments/assets/b71b68cd-156e-432e-8a8c-bccc15965999)
+
+
   
 ## Huge Thanks to the following repositories
 1. https://github.com/CompVis/stable-diffusion/
